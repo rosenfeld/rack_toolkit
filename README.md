@@ -95,6 +95,43 @@ server.env['rack.hijack'] == 'custom hijack'
 Take a look at this project's test suite to see an example on how it can be configured and how
 it works.
 
+### Using with Rails
+
+RackToolkit can be used with any Rack app, including Rails. Here's an example using RSpec:
+
+```ruby
+# spec/rack_spec.rb
+
+ENV['RAILS_ENV'] = 'test'
+require_relative '../config/environment.rb'
+require 'rack_toolkit'
+
+RSpec.describe 'Testing with RackToolkit' do
+  server = nil
+  before(:all){ server = RackToolkit::Server.new app: Rails.application, start: true }
+  after(:all){ server.stop }
+
+  it 'works' do
+    server.get '/'
+    expect(server.current_path).to eq '/login' # assuming root is protected with authentication
+  end
+end
+```
+
+### Capybara-like DSL for filling in and submitting forms...
+
+Currently RackToolkit doesn't provide a more advanced DSL, like Capybara does, for easy access
+to DOM elements, filling in forms and submitting them. At some point it could expand its DSL
+to make it easier to perform such actions.
+
+### JavaScript
+
+JavaScript support is outside the scope of this project unless we can think of some way of
+adding it without requiring a real browser (headless or not) which adds a significant overhead
+and RackToolkit main goal is to remain fast. I don't think it will even happen. If you want
+to test your JavaScript, please do so with Capybara or using a separate JavaScript test runner,
+testing it in isolation with the server-side, which should be quite fast.
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec`
