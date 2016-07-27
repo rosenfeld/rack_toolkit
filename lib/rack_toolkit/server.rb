@@ -12,7 +12,7 @@ module RackToolkit
   class Server
     attr_accessor :app, :default_env, :referer, :default_headers
     attr_reader :bind_host, :host, :server, :default_domain, :last_response, :http, :cookie_jar,
-      :env, :env_from_server, :rack_env, :virtual_hosts
+      :env, :env_from_server, :rack_env, :virtual_hosts, :current_uri
 
     def initialize(app: nil, port: nil, bind_host: '127.0.0.1', virtual_hosts: [], host: nil,
                    dynamic_app: nil, default_env: {}, default_domain: nil, default_headers: {},
@@ -93,6 +93,14 @@ module RackToolkit
       @port ||= find_free_tcp_port
     end
 
+    def current_path
+      current_uri.path
+    end
+
+    def current_url
+      current_uri.to_s
+    end
+
     private
 
     def find_free_tcp_port
@@ -112,12 +120,14 @@ module RackToolkit
       end
     end
 
-    def wrap_response(url_or_path, headers, env_override, params, follow_redirect, redirect_limit)
+    def wrap_response(url_or_path, headers, env_override, params, follow_redirect,
+                      redirect_limit)
       uri = normalize_uri(url_or_path, params)
       h = prepare_headers headers, env_override, uri
       response = uri.host == host ? yield(uri, h, @http) :
           Net::HTTP.start(uri.host, uri.port){|http| yield uri, h, http }
       @last_response = response.extend ResponseEnhancer
+      @current_uri = uri.clone
       store_cookies uri
       self.referer = @original_uri.to_s
       @request_env = {}

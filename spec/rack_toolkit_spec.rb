@@ -62,7 +62,7 @@ RSpec.describe RackToolkit do
 
   context 'with redirect' do
     before(:all) do
-      root = @server.base_uri.to_s
+      root = 'http://127.0.0.1'
       @server.app = ->(env) do
         case env['PATH_INFO']
         when '/redirect_permanent' then [301, {'location' => root}, ['redirecting']]
@@ -92,6 +92,17 @@ RSpec.describe RackToolkit do
     it 'raises on infinite loop' do
       expect{ @server.get '/redirect_loop' }.
         to raise_exception(RackToolkit::Server::InfiniteRedirect)
+    end
+
+    it 'stores current_path correctly' do
+      @server.get '/any/path?p=1'
+      expect(@server.current_url).to eq 'http://127.0.0.1/any/path?p=1'
+      expect(@server.current_uri.scheme).to eq 'http'
+      @server.get '/redirect'
+      expect(@server.current_url).to eq 'http://127.0.0.1'
+      @server.get '/redirect', follow_redirect: false
+      expect(@server.current_url).to eq 'http://127.0.0.1/redirect'
+      expect(@server.current_path).to eq '/redirect'
     end
   end
 
