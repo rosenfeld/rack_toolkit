@@ -64,7 +64,9 @@ server.post 'https://test-app.com/signin', follow_redirect: false # default is t
 server.env['HTTP_X_FORWARDED_PROTO'] == 'https'
 server.env['HTTP_HOST'] == 'test-app.com'
 server.last_response.status_code == 302 # assuming an app performing a redirect
+server.current_path == '/signin'
 server.follow_redirect! # not necessary if follow_redirect: false is not specified
+server.current_path == '/' # assuming it has been redirected to /
 server.last_response.ok? == true
 
 server.post '/signin', params: {user: 'guest', pass: 'secret'}
@@ -77,6 +79,18 @@ different apps. Starting Puma is really fast (less than 5ms usually) so if you p
 you can start it on each test file. Also, RackToolkit was designed so that you can span
 multiple servers running different apps for example if you want them to communicate to each
 other for testing SSO for example.
+
+Use the `headers` param in `get`/`post`/`post_data` to override headers sent to the server.
+The `env_override` param can be used to override the `env` sent to the Rack app after the
+server provided its own `env`. In both cases, the resulting `headers` or `env` will be merged
+with the provided options:
+
+```ruby
+server.get 'https://test-app.com/', headers: { 'Host' => 'mydomain.com' },
+    env_override: { 'rack.hijack' => 'custom hijack' }
+server.env['HTTP_HOST'] == 'mydomain.com'
+server.env['rack.hijack'] == 'custom hijack'
+```
 
 Take a look at this project's test suite to see an example on how it can be configured and how
 it works.
