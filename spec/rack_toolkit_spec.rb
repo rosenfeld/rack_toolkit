@@ -46,6 +46,18 @@ RSpec.describe RackToolkit do
       @server.get '/'
       expect(@server.env['HTTP_HOST']).to eq '127.0.0.1'
     end
+
+    it 'allows headers to be specified' do
+      @server.get '/', headers: {'Host' => 'overriden.com'}
+      expect(@server.env['HTTP_HOST']).to eq 'overriden.com'
+    end
+
+    it 'allows overriding the env sent to the app' do
+      @server.get '/'
+      expect(@server.env['rack.hijack']).to respond_to :call
+      @server.get '/', env_override: {'rack.hijack' => 'overriden'}
+      expect(@server.env['rack.hijack']).to eq 'overriden'
+    end
   end
 
   context 'with redirect' do
