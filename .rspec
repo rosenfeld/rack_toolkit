@@ -1,0 +1,4 @@
+-I lib
+--format documentation
+--color
+--order random
